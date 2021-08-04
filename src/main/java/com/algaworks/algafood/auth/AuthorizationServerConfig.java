@@ -45,6 +45,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 				.authorizedGrantTypes("client_credentials")
 				.scopes("write", "read")
 			.and()
+				.withClient("webadmin")
+				.authorizedGrantTypes("implicit")
+				.redirectUris("http://aplicacao-cliente")
+				.scopes("write", "read")
+			.and()
 				.withClient("checktoken")
 				.secret(passwordEncoder.encode("check123"));
 	}
