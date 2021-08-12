@@ -1,4 +1,4 @@
-package com.algaworks.algafood.auth;
+package com.algaworks.algafood.auth.core;
 
 import java.util.Arrays;
 
@@ -16,6 +16,10 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.TokenApprovalStore;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 
@@ -68,23 +72,36 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 		security.checkTokenAccess("permitAll()")
-				.tokenKeyAccess("permitAll()");
+				.tokenKeyAccess("permitAll()")
+				.allowFormAuthenticationForClients();
 	}
 	
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+		
+		var enhancerChain =  new TokenEnhancerChain();
+		enhancerChain.setTokenEnhancers(
+				Arrays.asList(new JwtCustomClaimsTokenEnhancer(), new JwtAccessTokenConverter()));
+		
 		endpoints
 			.authenticationManager(authenticationManager)
 			.userDetailsService(detailsService)
 			.reuseRefreshTokens(false)
 			.accessTokenConverter(jwtAceAccessTokenConverter())
+			.tokenEnhancer(enhancerChain)
+			.approvalStore(tokenStore(endpoints.getTokenStore()))
 			.tokenGranter(tokenGranter(endpoints));
+	}
+	
+	private ApprovalStore tokenStore(TokenStore tokenStore) {
+		var approvalStore = new TokenApprovalStore();
+		approvalStore.setTokenStore(tokenStore);
+		return approvalStore;
 	}
 	
 	@Bean
 	public JwtAccessTokenConverter jwtAceAccessTokenConverter() {
 		var jwtAccessTokenConverter =  new JwtAccessTokenConverter();
-//		jwtAccessTokenConverter.setSigningKey("skjsakjldaskjdasjkadsjkasdkljsakljsdajklsadkjlasdjklsda");
 		
 		var jksResource = new ClassPathResource(jwtKeyStoreProperties.getPath());
 
