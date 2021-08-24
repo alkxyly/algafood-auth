@@ -2,6 +2,8 @@ package com.algaworks.algafood.auth.core;
 
 import java.util.Arrays;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,40 +41,47 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired
 	private JwtKeyStoreProperties jwtKeyStoreProperties;
 	
+	@Autowired
+	private DataSource dataSource;
+	
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-		clients.inMemory()
-			.withClient("algafood-web")
-				.secret(passwordEncoder.encode("web123"))
-				.authorizedGrantTypes("password","refresh_token")
-				.scopes("WRITE","READ")
-				.accessTokenValiditySeconds(6 * 60 * 60)
-				.refreshTokenValiditySeconds(60 * 24 * 60 * 60)
-			.and()
-				.withClient("foodanalytics")
-				.secret(passwordEncoder.encode("food123"))
-				.authorizedGrantTypes("authorization_code")
-				.scopes("WRITE", "READ")
-				.redirectUris("http://aplicacao-cliente")
-			.and()
-				.withClient("faturamento")
-				.secret(passwordEncoder.encode("faturamento123"))
-				.authorizedGrantTypes("client_credentials")
-				.scopes("WRITE", "READ")
-			.and()
-				.withClient("webadmin")
-				.authorizedGrantTypes("implicit")
-				.redirectUris("http://aplicacao-cliente")
-				.scopes("WRITE", "READ")
-			.and()
-				.withClient("checktoken")
-				.secret(passwordEncoder.encode("check123"));
+		
+		clients.jdbc(dataSource);
+		
+//		clients.inMemory()
+//			.withClient("algafood-web")
+//				.secret(passwordEncoder.encode("web123"))
+//				.authorizedGrantTypes("password","refresh_token")
+//				.scopes("WRITE","READ")
+//				.accessTokenValiditySeconds(6 * 60 * 60)
+//				.refreshTokenValiditySeconds(60 * 24 * 60 * 60)
+//			.and()
+//				.withClient("foodanalytics")
+//				.secret(passwordEncoder.encode("food123"))
+//				.authorizedGrantTypes("authorization_code")
+//				.scopes("WRITE", "READ")
+//				.redirectUris("http://aplicacao-cliente")
+//			.and()
+//				.withClient("faturamento")
+//				.secret(passwordEncoder.encode("faturamento123"))
+//				.authorizedGrantTypes("client_credentials")
+//				.scopes("WRITE", "READ")
+//			.and()
+//				.withClient("webadmin")
+//				.authorizedGrantTypes("implicit")
+//				.redirectUris("http://aplicacao-cliente")
+//				.scopes("WRITE", "READ")
+//			.and()
+//				.withClient("checktoken")
+//				.secret(passwordEncoder.encode("check123"));
 	}
 	
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 		security.checkTokenAccess("permitAll()")
-				.tokenKeyAccess("permitAll()");
+				.tokenKeyAccess("permitAll()")
+				.allowFormAuthenticationForClients();
 //				.allowFormAuthenticationForClients();
 	}
 	
